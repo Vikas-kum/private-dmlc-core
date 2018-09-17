@@ -342,6 +342,8 @@ class PSTracker(object):
         Starts the PS scheduler
         """
         self.cmd = cmd
+        logging.basicConfig(level=logging.INFO)
+        logging.info("Vikas kkkl cmd is %s",cmd)
         if cmd is None:
             return
         envs = {} if envs is None else envs
@@ -366,6 +368,7 @@ class PSTracker(object):
             target=(lambda: subprocess.check_call(self.cmd, env=env, shell=True)), args=())
         self.thread.setDaemon(True)
         self.thread.start()
+        #time.sleep(10)
 
     def join(self):
         if self.cmd is not None:
@@ -414,7 +417,7 @@ def submit(nworker, nserver, fun_submit, hostIP='auto', pscmd=None):
     envs = {'DMLC_NUM_WORKER' : nworker,
             'DMLC_NUM_SERVER' : nserver}
     hostIP = get_host_ip(hostIP)
-
+  #  hostIP = '127.0.0.1'
     if nserver == 0:
         rabit = RabitTracker(hostIP=hostIP, nslave=nworker)
         envs.update(rabit.slave_envs())
