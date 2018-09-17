@@ -78,6 +78,8 @@ def submit(args):
             pass_envs['DMLC_ROLE'] = 'server' if i < nserver else 'worker'
             (node, port) = hosts[i % len(hosts)]
             pass_envs['DMLC_NODE_HOST'] = node
+            pass_envs['PS_VERBOSE']='1'
+            #pass_envs['PORT']=str(i)
             prog = get_env(pass_envs) + ' cd ' + working_dir + '; ' + (' '.join(args.command))
             prog = 'ssh -o StrictHostKeyChecking=no ' + node + ' -p ' + port + ' \'' + prog + '\''
             thread = Thread(target = run, args=(prog,))
