@@ -337,7 +337,7 @@ class PSTracker(object):
     """
     Tracker module for PS
     """
-    def __init__(self, hostIP, cmd, port=9091, port_end=9999, envs=None):
+    def __init__(self, hostIP, cmd, port=9091, port_end=9999, envs=None, args=None):
         """
         Starts the PS scheduler
         """
@@ -360,8 +360,16 @@ class PSTracker(object):
         env['DMLC_ROLE'] = 'scheduler'
         env['DMLC_PS_ROOT_URI'] = str(self.hostIP)
         env['DMLC_PS_ROOT_PORT'] = str(self.port)
+        if args is not None:
+            env['MXNET_LAUNCH_SCRIPT_PATH'] = str(args.mxnet_launch_script_path)
+            env['TRAINING_CMD'] = str(' '.join(args.command))
+            env['WORKER_HOST_FILE'] = str(args.worker_host_file)
+            env['INSTANCE_POOL'] = 'DEFAULT'
+            # TODO pass everything in args env as worker environment to scheduler
         for k, v in envs.items():
             env[k] = str(v)
+        logging.info("Setting env for scheduler : %s", env)
+
         self.thread = Thread(
             target=(lambda: subprocess.check_call(self.cmd, env=env, shell=True)), args=())
         self.thread.setDaemon(True)
@@ -406,15 +414,13 @@ def get_host_ip(hostIP=None):
             hostIP = s.getsockname()[0]
     return hostIP
 
-
-def submit(nworker, nserver, fun_submit, hostIP='auto', pscmd=None):
+def submit(nworker, nserver, fun_submit, hostIP='auto', pscmd=None, args=None):
     if nserver == 0:
         pscmd = None
 
     envs = {'DMLC_NUM_WORKER' : nworker,
             'DMLC_NUM_SERVER' : nserver}
     hostIP = get_host_ip(hostIP)
-
     if nserver == 0:
         rabit = RabitTracker(hostIP=hostIP, nslave=nworker)
         envs.update(rabit.slave_envs())
@@ -422,7 +428,7 @@ def submit(nworker, nserver, fun_submit, hostIP='auto', pscmd=None):
         if rabit.alive():
            fun_submit(nworker, nserver, envs) 
     else:
-        pserver = PSTracker(hostIP=hostIP, cmd=pscmd, envs=envs)
+        pserver = PSTracker(hostIP=hostIP, cmd=pscmd, envs=envs, args=args)
         envs.update(pserver.slave_envs())
         if pserver.alive():
             fun_submit(nworker, nserver, envs)

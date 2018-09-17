@@ -35,7 +35,38 @@ def get_env(pass_envs):
         envs.append('export ' + str(k) + '=' + str(v) + ';')
     return (' '.join(envs))
 
+def launch_new_worker_node(args):
+    pass_envs = {}
+    if args.launch_worker is True:
+        pass_envs['DMLC_ROLE'] = 'worker'
+        pass_envs['DMLC_NODE_HOST'] = args.host
+        pass_envs['ELASTIC_TRAINING_ENABLED']= '1'
+
+        if args.env is not None:
+            for entry in args.env:
+                entry = entry.strip()
+                i = entry.find(":")
+                if i != -1:
+                    val = entry[i+1:]
+                    pass_envs[entry[:i]] = val
+    
+        prog = get_env(pass_envs) +  (' '.join(args.command))
+        port = 22
+        if args.port is not None:
+            port = args.port
+
+        prog = 'ssh -A -o StrictHostKeyChecking=no ' + args.host + ' -p ' + port + ' \'' + prog + '\''
+        logging.info("Launching new worker jobs :{} env:{}".format( prog, os.environ))
+        thread = Thread(target = lambda: subprocess.check_call(prog, env=os.environ, shell=True), args=() )
+        thread.setDaemon(True)
+        thread.start()
+        thread.join(10)
+        return
+
 def submit(args):
+    if args.launch_worker is True:
+      launch_new_worker_node(args)
+      return
     assert args.host_file is not None
     with open(args.host_file) as f:
         tmp = f.readlines()
@@ -52,7 +83,24 @@ def submit(args):
                 h = h[:i]
             # hosts now contain the pair ip, port
             hosts.append((h, p))
+    
+    if args.elastic_training_enabled is True:
+        # create worker host file
+        if os.path.exists(args.worker_host_file):
+            os.remove(args.worker_host_file)
+        with open(args.worker_host_file, 'a') as whf:
+            for i in range(args.num_workers + args.num_servers):
+                if i >= args.num_servers:
+                    (node, port) = hosts[i % len(hosts)]
+                    whf.write(node + "\n")
+        logging.info("Created worker host file {}".format(args.args.worker_host_file))
+        if os.path.exists(args.worker_host_file + "_log"):
+            os.remove(args.worker_host_file + "_log")
+        f = open(args.worker_host_file + "_log", "w+")
+        logging.info("Created worker host log file {}".format(args.worker_host_file + "_log))
+        f.close()
 
+        
     def ssh_submit(nworker, nserver, pass_envs):
         """
         customized submit script
@@ -78,15 +126,18 @@ def submit(args):
             pass_envs['DMLC_ROLE'] = 'server' if i < nserver else 'worker'
             (node, port) = hosts[i % len(hosts)]
             pass_envs['DMLC_NODE_HOST'] = node
+            if args.elastic_training_enabled:
+                pass_envs['ELASTIC_TRAINING_ENABLED']= '1' 
             prog = get_env(pass_envs) + ' cd ' + working_dir + '; ' + (' '.join(args.command))
             prog = 'ssh -o StrictHostKeyChecking=no ' + node + ' -p ' + port + ' \'' + prog + '\''
+            logging.info("Launching {} node at ip: {}".format(pass_envs['DMLC_ROLE'], node))
             thread = Thread(target = run, args=(prog,))
             thread.setDaemon(True)
             thread.start()
 
         return ssh_submit
-
+    logging.info("cmd:%s", args.command)
     tracker.submit(args.num_workers, args.num_servers,
                    fun_submit=ssh_submit,
                    pscmd=(' '.join(args.command)),
-                   hostIP=args.host_ip)
+                   hostIP=args.host_ip, args=args)

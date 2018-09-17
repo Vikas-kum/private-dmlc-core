@@ -13,7 +13,7 @@
 #include "io/local_filesys.h"
 #include "io/cached_input_split.h"
 #include "io/threaded_input_split.h"
-
+//#include<iostream>
 #if DMLC_USE_HDFS
 #include "io/hdfs_filesys.h"
 #endif
@@ -91,6 +91,9 @@ InputSplit* InputSplit::Create(const char *uri_,
   using namespace std;
   using namespace dmlc::io;
   // allow cachefile in format path#cachefile
+ // std::string s = uri_;
+  //exit(0);
+ // std::cout<< s << " VVVVIKAS  \n\n";
   io::URISpec spec(uri_, part, nsplit);
   if (!strcmp(spec.uri.c_str(), "stdin")) {
     return new SingleFileSplit(spec.uri.c_str());
