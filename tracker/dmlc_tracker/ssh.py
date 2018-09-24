@@ -21,7 +21,7 @@ def sync_dir(local_dir, slave_node, slave_dir):
         slave_node[1], local_dir, remote)
     subprocess.check_call([prog], shell = True)
 
-def get_env(pass_envs):
+def get_env(pass_envs, extra_keys=None):
     envs = []
     # get system envs
     keys = ['OMP_NUM_THREADS', 'KMP_AFFINITY', 'LD_LIBRARY_PATH', 'AWS_ACCESS_KEY_ID',
@@ -36,6 +36,34 @@ def get_env(pass_envs):
     return (' '.join(envs))
 
 def submit(args):
+    # if args has launch-worker
+    # then launch only worker
+    pass_envs = {}
+    if args.launch_worker is True:
+        pass_envs['DMLC_ROLE'] = 'worker'
+        pass_envs['PS_VERBOSE']='1'
+        pass_envs['DMLC_NODE_HOST'] = args.host
+        if args.env is not None:
+            for entry in args.env:
+                entry = entry.strip()
+                i = entry.find(":")
+                if i != -1:
+                    val = entry[i+1:]
+                    pass_envs[entry[:i]] = val
+        
+        prog = get_env(pass_envs) +  (' '.join(args.command))
+        port = 22
+        if args.port is not None:
+            port = args.port
+
+        prog = 'ssh -o StrictHostKeyChecking=no ' + args.host + ' -p ' + port + ' \'' + prog + '\''
+        logging.info("VIKAS launching new worker jobs :%s", prog)
+        thread = Thread(target = lambda: subprocess.check_call(prog, env={}, shell=True), args=() )
+        thread.setDaemon(True)
+        thread.start()
+        thread.join(10)
+        return
+
     assert args.host_file is not None
     with open(args.host_file) as f:
         tmp = f.readlines()
@@ -52,6 +80,19 @@ def submit(args):
                 h = h[:i]
             # hosts now contain the pair ip, port
             hosts.append((h, p))
+    
+    
+    if args.elastic_training_enabled is True:
+        # create worker host file
+        if os.path.exists(args.worker_host_file):
+            os.remove(args.worker_host_file)
+        with open(args.worker_host_file, 'a') as whf:
+            for i in range(args.num_workers + args.num_servers):
+                if i >= args.num_servers:
+                    (node, port) = hosts[i % len(hosts)]
+                    whf.write(node + ":" + port + "\n")
+
+        
 
     def ssh_submit(nworker, nserver, pass_envs):
         """
@@ -77,18 +118,19 @@ def submit(args):
         for i in range(nworker + nserver):
             pass_envs['DMLC_ROLE'] = 'server' if i < nserver else 'worker'
             (node, port) = hosts[i % len(hosts)]
-            pass_envs['DMLC_NODE_HOST'] = node
+            pass_envs['DMLC_NODE_HOST'] = '127.0.0.1'
             pass_envs['PS_VERBOSE']='1'
             #pass_envs['PORT']=str(i)
             prog = get_env(pass_envs) + ' cd ' + working_dir + '; ' + (' '.join(args.command))
-            prog = 'ssh -o StrictHostKeyChecking=no ' + node + ' -p ' + port + ' \'' + prog + '\''
+            prog = 'ssh -o StrictHostKeyChecking=no ' + '127.0.0.1 ' + ' -p ' + port + ' \'' + prog + '\''
+            logging.info("VIKAS launching jobs :%s", prog)
             thread = Thread(target = run, args=(prog,))
             thread.setDaemon(True)
             thread.start()
 
         return ssh_submit
-
+    logging.info("Vikas pscmd:%s", args.command)
     tracker.submit(args.num_workers, args.num_servers,
                    fun_submit=ssh_submit,
                    pscmd=(' '.join(args.command)),
-                   hostIP=args.host_ip)
+                   hostIP=args.host_ip, args=args)
