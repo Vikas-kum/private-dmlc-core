@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 Distributed Machine Learning Common Codebase
 ============================================
 
@@ -39,3 +40,7 @@ NOTE
 deps:
 
 libcurl4-openssl-dev
+=======
+# private-dmlc-core
+dmlc core forked private
+>>>>>>> 485fa345ca424cbebe6d861733672e56bb986ba3
