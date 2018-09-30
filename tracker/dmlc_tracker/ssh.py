@@ -56,7 +56,7 @@ def submit(args):
         if args.port is not None:
             port = args.port
 
-        prog = 'ssh -o StrictHostKeyChecking=no ' + args.host + ' -p ' + port + ' \'' + prog + '\''
+        prog = 'ssh -A -o StrictHostKeyChecking=no ' + args.host + ' -p ' + port + ' \'' + prog + '\''
         logging.info("VIKAS launching new worker jobs :%s", prog)
         thread = Thread(target = lambda: subprocess.check_call(prog, env={}, shell=True), args=() )
         thread.setDaemon(True)
@@ -90,7 +90,7 @@ def submit(args):
             for i in range(args.num_workers + args.num_servers):
                 if i >= args.num_servers:
                     (node, port) = hosts[i % len(hosts)]
-                    whf.write(node + ":" + port + "\n")
+                    whf.write(node + "\n")
 
         
 
@@ -118,11 +118,11 @@ def submit(args):
         for i in range(nworker + nserver):
             pass_envs['DMLC_ROLE'] = 'server' if i < nserver else 'worker'
             (node, port) = hosts[i % len(hosts)]
-            pass_envs['DMLC_NODE_HOST'] = '127.0.0.1'
+            pass_envs['DMLC_NODE_HOST'] = node
             pass_envs['PS_VERBOSE']='1'
             #pass_envs['PORT']=str(i)
             prog = get_env(pass_envs) + ' cd ' + working_dir + '; ' + (' '.join(args.command))
-            prog = 'ssh -o StrictHostKeyChecking=no ' + '127.0.0.1 ' + ' -p ' + port + ' \'' + prog + '\''
+            prog = 'ssh -o StrictHostKeyChecking=no ' + node + ' -p ' + port + ' \'' + prog + '\''
             logging.info("VIKAS launching jobs :%s", prog)
             thread = Thread(target = run, args=(prog,))
             thread.setDaemon(True)

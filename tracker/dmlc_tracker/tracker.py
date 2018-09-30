@@ -347,7 +347,7 @@ class PSTracker(object):
         if cmd is None:
             return
         envs = {} if envs is None else envs
-        hostIP = '127.0.0.1'
+        #hostIP = '127.0.0.1'
         self.hostIP = hostIP
     
         sock = socket.socket(get_family(hostIP), socket.SOCK_STREAM)
@@ -430,8 +430,8 @@ def submit(nworker, nserver, fun_submit, hostIP='auto', pscmd=None, args=None):
     envs = {'DMLC_NUM_WORKER' : nworker,
             'DMLC_NUM_SERVER' : nserver,
             'PS_VERBOSE':1}
-    #hostIP = get_host_ip(hostIP)
-    hostIP = '127.0.0.1'
+    hostIP = get_host_ip(hostIP)
+    #hostIP = '127.0.0.1'
     if nserver == 0:
         rabit = RabitTracker(hostIP=hostIP, nslave=nworker)
         envs.update(rabit.slave_envs())
