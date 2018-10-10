@@ -120,6 +120,7 @@ def submit(args):
             (node, port) = hosts[i % len(hosts)]
             pass_envs['DMLC_NODE_HOST'] = node
             pass_envs['PS_VERBOSE']='1'
+            pass_envs['ELASTIC_TRAINING_ENABLED']= args.elastic_training_enabled
             #pass_envs['PORT']=str(i)
             prog = get_env(pass_envs) + ' cd ' + working_dir + '; ' + (' '.join(args.command))
             prog = 'ssh -o StrictHostKeyChecking=no ' + node + ' -p ' + port + ' \'' + prog + '\''

@@ -349,7 +349,7 @@ class PSTracker(object):
         envs = {} if envs is None else envs
         #hostIP = '127.0.0.1'
         self.hostIP = hostIP
-    
+        print("HOSTIP:{}".format(hostIP)) 
         sock = socket.socket(get_family(hostIP), socket.SOCK_STREAM)
         for port in range(port, port_end):
             try:
@@ -414,7 +414,7 @@ def get_host_ip(hostIP=None):
             hostIP = socket.gethostbyname(socket.getfqdn())
         except gaierror:
             logging.warn('gethostbyname(socket.getfqdn()) failed... trying on hostname()')
-            #hostIP = socket.gethostbyname(socket.gethostname())
+            hostIP = socket.gethostbyname(socket.gethostname())
         if hostIP.startswith("127."):
             s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             # doesn't have to be reachable
