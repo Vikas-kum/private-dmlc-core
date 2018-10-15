@@ -1,43 +1,64 @@
 # ---[ Google Test
-if(GTEST_ROOT)
-    find_package(GTest)
-else()
-    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/googletest")
-        add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/googletest")
-        set(GTEST_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/googletest")
-        set(GTEST_BOTH_LIBRARIES gtest gtest_main)
-        set(GTEST_FOUND ON)
-    elseif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/gtest")
-        add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/gtest")
-        set(GTEST_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/gtest")
-        set(GTEST_BOTH_LIBRARIES gtest gtest_main)
-        set(GTEST_FOUND ON)
-    else()
-        find_package(GTest)
-    endif()
+if(MSVC)
+  if(MSVC_VERSION LESS 1900)
+    message(FATAL_ERROR "Need Visual Studio 2015 or newer to compile unit tests")
+  endif()
 endif()
 
-if(GTEST_FOUND)
-    if (UNIX)
-        SET(CMAKE_EXE_LINKER_FLAGS "-pthread")
-    endif(UNIX)
-    enable_testing()
-    find_package(Threads REQUIRED)
-    file(GLOB_RECURSE UNIT_TEST_SOURCE "*.cc")
-<<<<<<< HEAD
-=======
-    include_directories(cpp/include)
->>>>>>> Fix two bugs in unittest's CMakeLists.txt (#418)
-    include_directories(${GTEST_INCLUDE_DIRS})
-    add_executable(${PROJECT_NAME}_unit_tests ${UNIT_TEST_SOURCE})
-    set_property(TARGET ${PROJECT_NAME}_unit_tests
-            PROPERTY RUNTIME_OUTPUT_DIRECTORY ${PRIVATE_RUNTIME_DIR})
-    target_link_libraries(${PROJECT_NAME}_unit_tests
-            ${GTEST_LIBRARIES}
-            dmlc
-            Threads::Threads
-            )
-    add_test(AllTestsIn${PROJECT_NAME}UnitTests ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${PROJECT_NAME}_unit_tests)
+if (UNIX)
+  SET(CMAKE_EXE_LINKER_FLAGS "-pthread")
+endif(UNIX)
+
+# Compiler definitions needed to use GNU/POSIX extensions
+set(ENABLE_GNU_EXTENSION_FLAGS -D_XOPEN_SOURCE=700
+  -D_POSIX_SOURCE -D_POSIX_C_SOURCE=200809L -D_DARWIN_C_SOURCE)
+
+enable_testing()
+find_package(Threads REQUIRED)
+
+file(GLOB_RECURSE UNIT_TEST_SOURCE "*.cc")
+add_executable(dmlc_unit_tests ${UNIT_TEST_SOURCE})
+set_property(TARGET dmlc_unit_tests
+  PROPERTY RUNTIME_OUTPUT_DIRECTORY ${PRIVATE_RUNTIME_DIR})
+
+message(STATUS "${CMAKE_CURRENT_SOURCE_DIR}/build_config.h.in -> ${CMAKE_CURRENT_SOURCE_DIR}/build_config.h")
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/build_config.h.in" "${CMAKE_CURRENT_SOURCE_DIR}/build_config.h")
+
+target_compile_definitions(dmlc_unit_tests PRIVATE -DDMLC_UNIT_TESTS_USE_CMAKE ${ENABLE_GNU_EXTENSION_FLAGS})
+target_include_directories(dmlc_unit_tests PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+
+find_package(GTest)
+if (NOT GTEST_FOUND)
+  message(STATUS "GTest not found, downloading GTest.")
+  # Download and unpack googletest at configure time
+  message("${CMAKE_LOCAL}/gtest_cmake.in -> ${CMAKE_BINARY_DIR}/googletest-download/CMakeLists.txt")
+  configure_file("${CMAKE_LOCAL}/gtest_cmake.in" "${CMAKE_BINARY_DIR}/googletest-download/CMakeLists.txt")
+  execute_process(COMMAND "${CMAKE_COMMAND}" -G "${CMAKE_GENERATOR}" .
+    WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/googletest-download" )
+  execute_process(COMMAND "${CMAKE_COMMAND}" --build .
+    WORKING_DIRECTORY "${CMAKE_BINARY_DIR}/googletest-download" )
+  # Prevent GoogleTest from overriding our compiler/linker options
+  # when building with Visual Studio
+  set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+
+  # Add googletest directly to our build. This adds
+  # the following targets: gtest, gtest_main, gmock
+  # and gmock_main
+  add_subdirectory("${CMAKE_BINARY_DIR}/googletest-src"
+    "${CMAKE_BINARY_DIR}/googletest-build")
+
+  target_compile_definitions(gtest PRIVATE ${ENABLE_GNU_EXTENSION_FLAGS})
+  target_compile_definitions(gmock PRIVATE ${ENABLE_GNU_EXTENSION_FLAGS})
+  target_compile_definitions(gtest_main PRIVATE ${ENABLE_GNU_EXTENSION_FLAGS})
+  target_compile_definitions(gmock_main PRIVATE ${ENABLE_GNU_EXTENSION_FLAGS})
+  target_include_directories(dmlc_unit_tests PRIVATE
+    "${gtest_SOURCE_DIR}/include" "${gmock_SOURCE_DIR}/include")
+  target_link_libraries(dmlc_unit_tests
+    gtest dmlc Threads::Threads)
 else()
-    message(WARNING "Google Test not found")
+  target_include_directories(dmlc_unit_tests PRIVATE ${GTEST_INCLUDE_DIRS})
+  target_link_libraries(dmlc_unit_tests
+    ${GTEST_LIBRARIES} dmlc Threads::Threads)
 endif()
+
+add_test(AllTestsInDMLCUnitTests ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/dmlc_unit_tests)
