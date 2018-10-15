@@ -337,7 +337,7 @@ class PSTracker(object):
     """
     Tracker module for PS
     """
-    def __init__(self, hostIP, cmd, port=9091, port_end=9999, envs=None):
+    def __init__(self, hostIP, cmd, port=9091, port_end=9999, envs=None, args=None):
         """
         Starts the PS scheduler
         """

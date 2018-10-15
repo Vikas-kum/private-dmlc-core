@@ -96,7 +96,7 @@ def submit(args):
                     whf.write(node + "\n")
 
         
-    def ssh_submit(nworker, nserver, dmlc_envs, addnl_envs):
+    def ssh_submit(nworker, nserver, pass_envs):
         """
         customized submit script
         """
