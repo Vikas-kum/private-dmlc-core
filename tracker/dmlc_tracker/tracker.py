@@ -342,7 +342,7 @@ class PSTracker(object):
         Starts the PS scheduler
         """
         self.cmd = cmd
-        logging.info("Vikas kkkl cmd is %s",cmd)
+        logging.info("cmd is %s",cmd)
         if cmd is None:
             return
         envs = {} if envs is None else envs

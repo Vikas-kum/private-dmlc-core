@@ -39,7 +39,6 @@ def launch_new_worker_node(args):
     pass_envs = {}
     if args.launch_worker is True:
         pass_envs['DMLC_ROLE'] = 'worker'
-        pass_envs['PS_VERBOSE']='1'
         pass_envs['DMLC_NODE_HOST'] = args.host
         pass_envs['ELASTIC_TRAINING_ENABLED']= '1'
 
@@ -130,7 +129,7 @@ def submit(args):
             thread.start()
 
         return ssh_submit
-    logging.info("Vikas pscmd:%s", args.command)
+    logging.info("cmd:%s", args.command)
     tracker.submit(args.num_workers, args.num_servers,
                    fun_submit=ssh_submit,
                    pscmd=(' '.join(args.command)),
