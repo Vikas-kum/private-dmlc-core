@@ -55,7 +55,7 @@ def launch_new_worker_node(args):
         if args.port is not None:
             port = args.port
 
-        prog = 'ssh -A -o StrictHostKeyChecking=no ' + args.host + ' -p ' + port + ' \'' + prog + '\''
+        prog = 'ssh -o StrictHostKeyChecking=no ' + args.host + ' -p ' + port + ' \'' + prog + '\''
         logging.info("VIKAS launching new worker jobs :%s", prog)
         thread = Thread(target = lambda: subprocess.check_call(prog, env={}, shell=True), args=() )
         thread.setDaemon(True)
@@ -93,6 +93,10 @@ def submit(args):
                 if i >= args.num_servers:
                     (node, port) = hosts[i % len(hosts)]
                     whf.write(node + "\n")
+        if os.path.exists(args.worker_host_file + "_log"):
+            os.remove(args.worker_host_file + "_log")
+        f = open(args.worker_host_file + "_log", "w+")
+        f.close()
 
         
     def ssh_submit(nworker, nserver, pass_envs):

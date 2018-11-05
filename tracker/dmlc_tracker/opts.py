@@ -166,12 +166,6 @@ def get_opts(args=None):
                         help = ' if this option is set to true, elastic training is enabled. \
                         If True, you should specify which instance pool to use by using option \
                         --instance-pool')
-    parser.add_argument('--instance-pool', type=str, default='DEFAULT', help=' You can use '
-                        ' [reservedInstancePoolId | \'spotInstance\', | \'DEFAULT\']' \
-                        'In case of DEFAULT a file will be created in same folder ' 
-                        ' where --hostfile lives. The default worker filename will be \'default_worker_file\'')
-    parser.add_argument('--max-elastic-instances', type=int, default=0,help = ' if instance pool is reserved' \
-                        ' or spotInstance, up to max-elastic-instances can be added to existing cluster')
     parser.add_argument('--launch-worker', type=bool, default=False, help = 'whether this script should' \
                         'only launch worker instances')    
     parser.add_argument('--host', type=str, help='host name or ip of new worker host to launch')
