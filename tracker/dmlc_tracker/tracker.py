@@ -365,7 +365,7 @@ class PSTracker(object):
             env['MXNET_LAUNCH_SCRIPT_PATH'] = str(args.mxnet_launch_script_path)
             env['TRAINING_CMD'] = str(' '.join(args.command))
             env['WORKER_HOST_FILE'] = str(args.worker_host_file)
-            env['INSTANCE_POOL'] = str(args.instance_pool)
+            env['INSTANCE_POOL'] = 'DEFAULT'
             # TODO pass everything in args env as worker environment to scheduler
         for k, v in envs.items():
             env[k] = str(v)
