@@ -41,7 +41,8 @@ def submit(args):
     pass_envs = {}
     if args.launch_worker is True:
         pass_envs['DMLC_ROLE'] = 'worker'
-        pass_envs['PS_VERBOSE']='1'
+        #pass_envs['PS_VERBOSE']='1'
+        pass_envs['PS_VERBOSE']='0'
         pass_envs['DMLC_NODE_HOST'] = args.host
         pass_envs['ELASTIC_TRAINING_ENABLED']= '1' 
 
@@ -121,7 +122,8 @@ def submit(args):
             pass_envs['DMLC_ROLE'] = 'server' if i < nserver else 'worker'
             (node, port) = hosts[i % len(hosts)]
             pass_envs['DMLC_NODE_HOST'] = node
-            pass_envs['PS_VERBOSE']='1'
+            #pass_envs['PS_VERBOSE']='1'
+            pass_envs['PS_VERBOSE']='0'
             if args.elastic_training_enabled:
                 pass_envs['ELASTIC_TRAINING_ENABLED']= '1' 
             #pass_envs['PORT']=str(i)
