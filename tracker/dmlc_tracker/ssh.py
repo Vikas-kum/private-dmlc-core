@@ -56,7 +56,7 @@ def launch_new_worker_node(args):
             port = args.port
 
         prog = 'ssh -A -o StrictHostKeyChecking=no ' + args.host + ' -p ' + port + ' \'' + prog + '\''
-        logging.info("VIKAS launching new worker jobs :{} env:{}".format( prog, os.environ))
+        logging.info("Launching new worker jobs :{} env:{}".format( prog, os.environ))
         thread = Thread(target = lambda: subprocess.check_call(prog, env=os.environ, shell=True), args=() )
         thread.setDaemon(True)
         thread.start()
