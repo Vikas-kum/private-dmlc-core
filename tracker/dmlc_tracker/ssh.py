@@ -93,9 +93,11 @@ def submit(args):
                 if i >= args.num_servers:
                     (node, port) = hosts[i % len(hosts)]
                     whf.write(node + "\n")
+        logging.info("Created worker host file {}".format(args.args.worker_host_file))
         if os.path.exists(args.worker_host_file + "_log"):
             os.remove(args.worker_host_file + "_log")
         f = open(args.worker_host_file + "_log", "w+")
+        logging.info("Created worker host log file {}".format(args.worker_host_file + "_log))
         f.close()
 
         
