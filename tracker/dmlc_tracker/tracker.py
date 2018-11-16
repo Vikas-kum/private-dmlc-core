@@ -342,7 +342,6 @@ class PSTracker(object):
         Starts the PS scheduler
         """
         self.cmd = cmd
-        logging.info("cmd is %s",cmd)
         if cmd is None:
             return
         envs = {} if envs is None else envs
@@ -369,7 +368,7 @@ class PSTracker(object):
             # TODO pass everything in args env as worker environment to scheduler
         for k, v in envs.items():
             env[k] = str(v)
-        logging.info("Setting debug info : %s", env)
+        logging.info("Setting env for scheduler : %s", env)
 
         self.thread = Thread(
             target=(lambda: subprocess.check_call(self.cmd, env=env, shell=True)), args=())

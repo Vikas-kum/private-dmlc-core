@@ -130,6 +130,7 @@ def submit(args):
                 pass_envs['ELASTIC_TRAINING_ENABLED']= '1' 
             prog = get_env(pass_envs) + ' cd ' + working_dir + '; ' + (' '.join(args.command))
             prog = 'ssh -o StrictHostKeyChecking=no ' + node + ' -p ' + port + ' \'' + prog + '\''
+            logging.info("Launching {} node at ip: {}".format(pass_envs['DMLC_ROLE'], node))
             thread = Thread(target = run, args=(prog,))
             thread.setDaemon(True)
             thread.start()
